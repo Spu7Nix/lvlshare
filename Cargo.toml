@@ -1,0 +1,13 @@
+[package]
+name = "gd_version_control"
+version = "0.1.0"
+authors = ["Spu7Nix <spu7nix@outlook.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+base64 = "0.2.1"
+libflate = "0.1.27"
+quick-xml = "0.17.2"
