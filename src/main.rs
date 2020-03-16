@@ -21,7 +21,7 @@ fn main() {
             let level = levelstring::get_level_string(file_content, &args[2]);
 
             use std::io::Write;
-            let mut file = fs::File::create(format!("{}.txt", args[2])).unwrap();
+            let mut file = fs::File::create(format!("{}.gdlvl", args[2])).unwrap();
             file.write_all(level.as_bytes());
         },
 
