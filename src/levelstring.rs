@@ -7,13 +7,7 @@ use std::io::Read;
 
 use std::path::PathBuf;
 
-fn base_64_decrypt(encoded: Vec<u8>) -> Vec<u8> {
-    let mut new_data = encoded;
-    while new_data.len() % 4 != 0 {
-        new_data.push(b'=')
-    }
-    base64::decode(String::from_utf8(new_data).unwrap().as_str()).unwrap()
-}
+use std::time::Instant;
 
 use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 use quick_xml::Reader;
@@ -127,7 +121,7 @@ pub fn get_level_string(save_decryptor: impl Read, level_name: &str) -> Vec<u8> 
 }
 
 pub fn export_level(level_file: PathBuf, save_file: PathBuf, save_decryptor: impl Read) {
-    //setting level string
+    let mut start_time = Instant::now();
 
     let mut reader = Reader::from_reader(BufReader::new(save_decryptor));
     reader.trim_text(true);
@@ -203,6 +197,7 @@ pub fn export_level(level_file: PathBuf, save_file: PathBuf, save_decryptor: imp
     let mut encoder = zlib::Encoder::new(Vec::new()).unwrap();
     encoder.write_all(&bytes).unwrap();
     let compressed = encoder.finish().into_result().unwrap();
+
     use crc32fast::Hasher;
 
     let mut hasher = Hasher::new();
