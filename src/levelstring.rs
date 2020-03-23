@@ -9,14 +9,55 @@ use std::path::PathBuf;
 
 use std::time::Instant;
 
-use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
+use quick_xml::events::Event;
 use quick_xml::Reader;
 use quick_xml::Writer;
 
 use std::io::BufReader;
 use std::io::Cursor;
 
-pub fn get_level_string(save_decryptor: impl Read, level_name: &str) -> Vec<u8> {
+pub fn get_level_names() -> Vec<String> {
+    let gd_path = PathBuf::from(std::env::var("localappdata").expect("No local app data"))
+        .join("GeometryDash/CCLocalLevels.dat");
+
+    let save_file = fs::File::open(gd_path.clone()).expect("Cannot find savefile!");
+    let mut xor = xorstream::Transformer::new(vec![11], save_file);
+    let b64 = base64::read::DecoderReader::new(&mut xor, base64::URL_SAFE);
+    let save_decryptor = gzip::Decoder::new(b64).unwrap();
+
+    let mut reader = Reader::from_reader(BufReader::new(save_decryptor));
+    reader.trim_text(true);
+    let mut buf = Vec::new();
+    let mut k2_detected = false;
+    let mut names = Vec::<String>::new();
+    loop {
+        match reader.read_event(&mut buf) {
+            Ok(Event::Text(e)) => {
+                let text = e.unescape_and_decode(&reader).unwrap();
+                if k2_detected {
+                    names.push(text);
+                    k2_detected = false;
+                } else if text == "k2" {
+                    k2_detected = true;
+                }
+            }
+            Ok(Event::Eof) => break,
+            Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
+            _ => (), // There are several other `Event`s we do not consider here
+        }
+    }
+    names
+}
+
+pub fn export_level(level_name: &str) -> Vec<u8> {
+    let gd_path = PathBuf::from(std::env::var("localappdata").expect("No local app data"))
+        .join("GeometryDash/CCLocalLevels.dat");
+
+    let save_file = fs::File::open(gd_path.clone()).expect("Cannot find savefile!");
+    let mut xor = xorstream::Transformer::new(vec![11], save_file);
+    let b64 = base64::read::DecoderReader::new(&mut xor, base64::URL_SAFE);
+    let save_decryptor = gzip::Decoder::new(b64).unwrap();
+
     let mut reader = Reader::from_reader(BufReader::new(save_decryptor));
     reader.trim_text(true);
     let mut buf = Vec::new();
@@ -120,8 +161,14 @@ pub fn get_level_string(save_decryptor: impl Read, level_name: &str) -> Vec<u8> 
     }
 }
 
-pub fn export_level(level_file: PathBuf, save_file: PathBuf, save_decryptor: impl Read) {
-    let mut start_time = Instant::now();
+pub fn import_level(level_file: PathBuf) {
+    let gd_path = PathBuf::from(std::env::var("localappdata").expect("No local app data"))
+        .join("GeometryDash/CCLocalLevels.dat");
+
+    let save_file = fs::File::open(gd_path.clone()).expect("Cannot find savefile!");
+    let mut xor = xorstream::Transformer::new(vec![11], save_file);
+    let b64 = base64::read::DecoderReader::new(&mut xor, base64::URL_SAFE);
+    let save_decryptor = gzip::Decoder::new(b64).unwrap();
 
     let mut reader = Reader::from_reader(BufReader::new(save_decryptor));
     reader.trim_text(true);
@@ -222,5 +269,5 @@ pub fn export_level(level_file: PathBuf, save_file: PathBuf, save_decryptor: imp
         *b ^= 11
     }
 
-    fs::write(save_file, encoded).unwrap();
+    fs::write(gd_path, encoded).unwrap();
 }

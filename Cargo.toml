@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Spu7Nix <spu7nix@outlook.com>"]
 edition = "2018"
 
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -13,3 +14,18 @@ libflate = "0.1.27"
 quick-xml = "0.17.2"
 xorstream = "2.0.2"
 crc32fast = "1.2.0"
+
+gtk = { version = "0.8.0", features = ["v3_22"] }
+glib = "0.9.3"
+gio = "0.8.1"
+
+
+relm = "0.19.0"
+relm-derive = "0.19.0"
+clipboard-win = "3.0.1"
+
+
+
+
+
+
