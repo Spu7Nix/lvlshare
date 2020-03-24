@@ -176,6 +176,8 @@ dependencies = [
  "glib",
  "gtk",
  "libflate",
+ "pango",
+ "process_list",
  "quick-xml",
  "relm",
  "relm-derive",
@@ -473,6 +475,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c09721c6781493a2a492a96b5a5bf19b65917fe6728884e7c44dd0c60ca3435"
 dependencies = [
  "unicode-xid 0.2.0",
+]
+
+[[package]]
+name = "process_list"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1132b222742f1d1bbe2078836970d9eac85cb354076b58534edc29aa14668ff0"
+dependencies = [
+ "winapi",
 ]
 
 [[package]]

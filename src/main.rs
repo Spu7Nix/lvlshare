@@ -1,65 +1,34 @@
-use std::env;
+#![windows_subsystem = "windows"]
 
 use std::fs;
 
-use std::path::PathBuf;
-use std::time::Instant;
-
-use base64;
-
-use libflate::gzip;
+use std::path::{Path, PathBuf};
 
 mod levelstring;
 
 use glib::types::StaticType;
 use gtk::ComboBoxExt;
-use gtk::GtkListStoreExt;
-use gtk::HeaderBarExt;
 
 use gtk::Orientation::*;
-use gtk::{ButtonExt, Inhibit, LabelExt, ListStore, OrientableExt, TreeModelExt, WidgetExt};
+use gtk::{ButtonExt, Inhibit, LabelExt, ListStore, OrientableExt, WidgetExt};
 
-use gio::prelude::*;
 use gtk::prelude::*;
-use gtk::{
-    ApplicationWindow, CellRendererText, Label, Orientation, TreeView, TreeViewColumn,
-    WindowPosition,
-};
 
-use relm::{init, Component, Widget};
+use relm::Widget;
 use relm_derive::{widget, Msg};
 
-#[derive(Msg)]
-pub enum HeaderMsg {}
-
-#[widget]
-impl Widget for Header {
-    fn model() -> () {}
-
-    fn update(&mut self, event: HeaderMsg) {}
-
-    view! {
-        #[name="titlebar"]
-        gtk::HeaderBar {
-            title: Some("Title"),
-            show_close_button: true,
-        }
-    }
-}
-
-pub struct Model {
-    header: Component<Header>,
-}
+pub struct Model {}
 
 #[derive(Msg)]
 pub enum Msg {
     Quit,
     Export,
+    Import,
 }
-fn error_message(message: &str, parent_window: &gtk::Window) {
+fn info_message(message: &str, parent_window: Option<&gtk::Window>) {
     use gtk::{ButtonsType, DialogFlags, MessageDialog, MessageType};
     let dialog = MessageDialog::new(
-        Some(parent_window),
+        parent_window,
         DialogFlags::empty(),
         MessageType::Info,
         ButtonsType::Ok,
@@ -69,6 +38,18 @@ fn error_message(message: &str, parent_window: &gtk::Window) {
     dialog.close();
 }
 
+fn get_title_atributes() -> pango::AttrList {
+    let attrs = pango::AttrList::new();
+    attrs.insert(pango::Attribute::new_scale(2.0).unwrap());
+    attrs
+}
+
+fn create_filter() -> gtk::FileFilter {
+    let filter = gtk::FileFilter::new();
+    filter.add_pattern("*.lvl");
+    filter
+}
+
 #[widget]
 impl Widget for Win {
     fn update(&mut self, event: Msg) {
@@ -76,7 +57,7 @@ impl Widget for Win {
             Msg::Quit => gtk::main_quit(),
 
             Msg::Export => {
-                use gtk::{ResponseType, Window};
+                use gtk::Window;
                 match self.level_select.get_active_text() {
                     Some(name) => {
                         use gtk::{FileChooserAction, FileChooserNative};
@@ -90,8 +71,7 @@ impl Widget for Win {
 
                         let name_str = String::from(name);
 
-                        let filter = gtk::FileFilter::new(); // http://gtk-rs.org/docs/gtk/struct.FileFilter.html
-                        filter.add_pattern("*.lvl");
+                        let filter = create_filter();
 
                         dialog.add_filter(&filter);
                         dialog.set_current_name(PathBuf::from(name_str.clone() + ".lvl"));
@@ -100,11 +80,28 @@ impl Widget for Win {
                             gtk::ResponseType::Cancel => {}
 
                             _ => {
-                                let level_string = &levelstring::export_level(&name_str);
+                                let level_string = &match levelstring::export_level(&name_str) {
+                                    Ok(s) => s,
+                                    Err(e) => {
+                                        info_message(&e, Some(&self.window));
+                                        return;
+                                    }
+                                };
 
-                                let mut file =
-                                    fs::File::create(PathBuf::from(dialog.get_filename().unwrap()))
-                                        .expect("Error when creating file.");
+                                let mut file = match fs::File::create(PathBuf::from(
+                                    dialog.get_filename().unwrap(),
+                                )) {
+                                    Ok(file) => file,
+                                    Err(e) => {
+                                        info_message(
+                                            &(String::from("Error when creating file: ")
+                                                + &format!("{}", e)),
+                                            Some(&self.window),
+                                        );
+                                        return;
+                                    }
+                                };
+
                                 use std::io::Write;
                                 file.write_all(level_string)
                                     .expect("Error when writing to file");
@@ -112,34 +109,65 @@ impl Widget for Win {
                         }
                     }
 
-                    None => error_message("Select a level to export!", &self.window),
+                    None => info_message("Select a level to export!", Some(&self.window)),
                 }
                 //let level_string = levelstring::export_level(&name);
+            }
+
+            Msg::Import => {
+                let mut gd_found = false;
+                process_list::for_each_process(|_, name: &Path| {
+                    if name.to_str().unwrap().replace("\0", "") == "GeometryDash.exe" {
+                        info_message("Close Geometry Dash before importing!", Some(&self.window));
+                        gd_found = true;
+                    }
+                })
+                .unwrap();
+                if gd_found {
+                    return;
+                }
+
+                match self.file_select.get_filename() {
+                    Some(file) => {
+                        match levelstring::import_level(file) {
+                            Some(err) => info_message(&err, Some(&self.window)),
+                            None => info_message(
+                                "Level has been imported to Geometry dash",
+                                Some(&self.window),
+                            ),
+                        };
+                    }
+                    None => info_message("Select a file to import!", Some(&self.window)),
+                }
             }
         }
     }
     fn model() -> Model {
-        let header = init::<Header>(()).expect("Header");
-
-        Model { header }
+        Model {}
     }
 
     view! {
         #[name = "window"]
         gtk::Window(gtk::WindowType::Toplevel) {
-            titlebar: Some(self.model.header.widget()),
+
             title: "LVLShare",
             decorated: true,
 
 
             gtk::Box {
                 homogeneous: true,
+                spacing: 10,
 
                 orientation: Horizontal,
 
                 gtk::Box {
-                    spacing: 20,
+                    //homogeneous: true,
+                    spacing: 10,
                     orientation: Vertical,
+                    gtk::Label {
+                        text: "Export Level",
+                        attributes: Some(&get_title_atributes()),
+                    },
                     #[name = "level_select"]
                     gtk::ComboBoxText {
                         model: Some(&create_level_list())
@@ -152,12 +180,22 @@ impl Widget for Win {
                 },
 
                 gtk::Box {
+                    //homogeneous: true,
+                    spacing: 10,
                     orientation: Vertical,
+                    gtk::Label {
+                        text: "Import File",
+                        attributes: Some(&get_title_atributes()),
+                    },
+                    #[name = "file_select"]
+                    gtk::FileChooserButton {
+                        filter: &create_filter(),
+                    },
+                    gtk::Button {
+                        label: "Import file as a Geometry Dash level",
+                        clicked => Msg::Import,
+                    },
                 },
-
-
-
-
 
             },
 
@@ -172,7 +210,13 @@ fn create_level_list() -> ListStore {
     let model = ListStore::new(&[String::static_type()]);
 
     // Filling up the tree view.
-    let entries = levelstring::get_level_names();
+    let entries = match levelstring::get_level_names() {
+        Ok(list) => list,
+        Err(e) => {
+            info_message(&e, None);
+            std::process::exit(0)
+        }
+    };
 
     for entry in entries.iter() {
         model.insert_with_values(None, &[0], &[&entry]);

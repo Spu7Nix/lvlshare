@@ -7,8 +7,6 @@ use std::io::Read;
 
 use std::path::PathBuf;
 
-use std::time::Instant;
-
 use quick_xml::events::Event;
 use quick_xml::Reader;
 use quick_xml::Writer;
@@ -16,11 +14,17 @@ use quick_xml::Writer;
 use std::io::BufReader;
 use std::io::Cursor;
 
-pub fn get_level_names() -> Vec<String> {
-    let gd_path = PathBuf::from(std::env::var("localappdata").expect("No local app data"))
-        .join("GeometryDash/CCLocalLevels.dat");
+pub fn get_level_names() -> Result<Vec<String>, String> {
+    let gd_path = PathBuf::from(match std::env::var("localappdata") {
+        Ok(path) => path,
+        Err(e) => return Err(e.to_string()),
+    })
+    .join("GeometryDash/CCLocalLevels.dat");
 
-    let save_file = fs::File::open(gd_path.clone()).expect("Cannot find savefile!");
+    let save_file = match fs::File::open(gd_path.clone()) {
+        Ok(file) => file,
+        Err(e) => return Err(format!("Cannot find savefile: {}", e)),
+    };
     let mut xor = xorstream::Transformer::new(vec![11], save_file);
     let b64 = base64::read::DecoderReader::new(&mut xor, base64::URL_SAFE);
     let save_decryptor = gzip::Decoder::new(b64).unwrap();
@@ -42,18 +46,31 @@ pub fn get_level_names() -> Vec<String> {
                 }
             }
             Ok(Event::Eof) => break,
-            Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
+            Err(e) => {
+                return Err(format!(
+                    "Error at position {}: {:?}",
+                    reader.buffer_position(),
+                    e
+                ))
+            }
             _ => (), // There are several other `Event`s we do not consider here
         }
     }
-    names
+    Ok(names)
 }
 
-pub fn export_level(level_name: &str) -> Vec<u8> {
-    let gd_path = PathBuf::from(std::env::var("localappdata").expect("No local app data"))
-        .join("GeometryDash/CCLocalLevels.dat");
+pub fn export_level(level_name: &str) -> Result<Vec<u8>, String> {
+    let gd_path = PathBuf::from(match std::env::var("localappdata") {
+        Ok(path) => path,
+        Err(e) => return Err(e.to_string()),
+    })
+    .join("GeometryDash/CCLocalLevels.dat");
 
-    let save_file = fs::File::open(gd_path.clone()).expect("Cannot find savefile!");
+    let save_file = match fs::File::open(gd_path.clone()) {
+        Ok(file) => file,
+        Err(e) => return Err(format!("Cannot find GD savefile: {}", e)),
+    };
+
     let mut xor = xorstream::Transformer::new(vec![11], save_file);
     let b64 = base64::read::DecoderReader::new(&mut xor, base64::URL_SAFE);
     let save_decryptor = gzip::Decoder::new(b64).unwrap();
@@ -125,7 +142,7 @@ pub fn export_level(level_name: &str) -> Vec<u8> {
                                                 &mut encoder,
                                             )
                                             .unwrap();
-                                            return encoder.finish().into_result().unwrap();
+                                            return Ok(encoder.finish().into_result().unwrap());
                                         }
                                     } else {
                                         d_value_layers -= 1
@@ -143,29 +160,41 @@ pub fn export_level(level_name: &str) -> Vec<u8> {
 
                             Err(e) => {
                                 if !not_the_level {
-                                    panic!(
+                                    return Err(format!(
                                         "Error at position {}: {:?}",
                                         reader.buffer_position(),
                                         e
-                                    )
+                                    ));
                                 }
                             }
                         }
                     }
                 }
             }
-            Ok(Event::Eof) => panic!("Level \"{}\" not found!", level_name),
-            Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
+            Ok(Event::Eof) => return Err(format!("Level \"{}\" not found!", level_name)),
+            Err(e) => {
+                return Err(format!(
+                    "Error at position {}: {:?}",
+                    reader.buffer_position(),
+                    e
+                ))
+            }
             _ => (), // There are several other `Event`s we do not consider here
         }
     }
 }
 
-pub fn import_level(level_file: PathBuf) {
-    let gd_path = PathBuf::from(std::env::var("localappdata").expect("No local app data"))
-        .join("GeometryDash/CCLocalLevels.dat");
+pub fn import_level(level_file: PathBuf) -> Option<String> {
+    let gd_path = PathBuf::from(match std::env::var("localappdata") {
+        Ok(path) => path,
+        Err(e) => return Some(e.to_string()),
+    })
+    .join("GeometryDash/CCLocalLevels.dat");
 
-    let save_file = fs::File::open(gd_path.clone()).expect("Cannot find savefile!");
+    let save_file = match fs::File::open(gd_path.clone()) {
+        Ok(file) => file,
+        Err(e) => return Some(format!("Cannot find savefile: {}", e)),
+    };
     let mut xor = xorstream::Transformer::new(vec![11], save_file);
     let b64 = base64::read::DecoderReader::new(&mut xor, base64::URL_SAFE);
     let save_decryptor = gzip::Decoder::new(b64).unwrap();
@@ -177,7 +206,10 @@ pub fn import_level(level_file: PathBuf) {
 
     //decompress the level file
 
-    let level_compressed = fs::File::open(level_file).expect("Cannot find specified file!");
+    let level_compressed = match fs::File::open(level_file) {
+        Ok(file) => file,
+        Err(e) => return Some(e.to_string()),
+    };
     let mut level_decompressor = gzip::Decoder::new(level_compressed).unwrap();
 
     let mut level = Vec::new();
@@ -188,7 +220,13 @@ pub fn import_level(level_file: PathBuf) {
     for _ in 0..11 {
         match reader.read_event(&mut buf) {
             Ok(e) => writer.write_event(e).unwrap(),
-            Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
+            Err(e) => {
+                return Some(format!(
+                    "Error at position {}: {:?}",
+                    reader.buffer_position(),
+                    e
+                ))
+            }
         };
     }
 
@@ -231,7 +269,13 @@ pub fn import_level(level_file: PathBuf) {
                 writer.write_event(e).unwrap();
             }
 
-            Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
+            Err(e) => {
+                return Some(format!(
+                    "Error at position {}: {:?}",
+                    reader.buffer_position(),
+                    e
+                ))
+            }
         };
 
         buf.clear()
@@ -270,4 +314,5 @@ pub fn import_level(level_file: PathBuf) {
     }
 
     fs::write(gd_path, encoded).unwrap();
+    None
 }
