@@ -1,5 +1,5 @@
 [package]
-name = "gd_version_control"
+name = "lvlshare"
 version = "0.1.0"
 authors = ["Spu7Nix <spu7nix@outlook.com>"]
 edition = "2018"
@@ -15,14 +15,7 @@ quick-xml = "0.17.2"
 xorstream = "2.0.2"
 crc32fast = "1.2.0"
 
-gtk = { version = "0.8.0", features = ["v3_22"] }
-glib = "0.9.3"
-gio = "0.8.1"
-pango = "0.8.0"
-
-relm = "0.19.0"
-relm-derive = "0.19.0"
-clipboard-win = "3.0.1"
+sciter-rs = "*"
 
 process_list = "0.2.1"
 

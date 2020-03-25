@@ -1,264 +1,129 @@
-#![windows_subsystem = "windows"]
-
-use std::fs;
-
-use std::path::{Path, PathBuf};
+//#![windows_subsystem = "windows"]
 
 mod levelstring;
 
-use glib::types::StaticType;
-use gtk::ComboBoxExt;
-
-use gtk::Orientation::*;
-use gtk::{ButtonExt, Inhibit, LabelExt, ListStore, OrientableExt, WidgetExt};
-
-use gtk::prelude::*;
-
-use relm::Widget;
-use relm_derive::{widget, Msg};
-
-pub struct Model {}
-
-#[derive(Msg)]
-pub enum Msg {
-    Quit,
-    Export,
-    Import,
-}
-fn info_message(message: &str, parent_window: Option<&gtk::Window>) {
-    use gtk::{ButtonsType, DialogFlags, MessageDialog, MessageType};
-    let dialog = MessageDialog::new(
-        parent_window,
-        DialogFlags::empty(),
-        MessageType::Info,
-        ButtonsType::Ok,
-        message,
-    );
-    dialog.run();
-    dialog.close();
+extern crate sciter;
+use sciter::{
+    dispatch_script_call, make_args,
+    types::{RECT, SCITER_CREATE_WINDOW_FLAGS::*},
+    Element, Value, Window,
+};
+use std::fs::File;
+use std::path::{Path, PathBuf};
+use std::rc::{Rc, Weak};
+struct Handler {
+    host: Weak<sciter::Host>,
 }
 
-fn get_title_atributes() -> pango::AttrList {
-    let attrs = pango::AttrList::new();
-    attrs.insert(pango::Attribute::new_scale(2.0).unwrap());
-    attrs
-}
+impl Handler {
+    fn export_level(&self, level_name: String, mut location: String) {
+        use std::io::Write;
+        location.replace_range(..7, "");
+        location = location.replace("%20", " ");
+        println!("{}", location);
+        let path = PathBuf::from(location);
 
-fn create_filter() -> gtk::FileFilter {
-    let filter = gtk::FileFilter::new();
-    filter.add_pattern("*.lvl");
-    filter
-}
-
-#[widget]
-impl Widget for Win {
-    fn update(&mut self, event: Msg) {
-        match event {
-            Msg::Quit => gtk::main_quit(),
-
-            Msg::Export => {
-                use gtk::Window;
-                match self.level_select.get_active_text() {
-                    Some(name) => {
-                        use gtk::{FileChooserAction, FileChooserNative};
-                        let dialog = FileChooserNative::new::<Window>(
-                            Some("Save File"),
-                            Some(&self.window),
-                            FileChooserAction::Save,
-                            Some("_Save"),
-                            Some("Cancel"),
-                        );
-
-                        let name_str = String::from(name);
-
-                        let filter = create_filter();
-
-                        dialog.add_filter(&filter);
-                        dialog.set_current_name(PathBuf::from(name_str.clone() + ".lvl"));
-
-                        match dialog.run() {
-                            gtk::ResponseType::Cancel => {}
-
-                            _ => {
-                                let level_string = &match levelstring::export_level(&name_str) {
-                                    Ok(s) => s,
-                                    Err(e) => {
-                                        info_message(&e, Some(&self.window));
-                                        return;
-                                    }
-                                };
-
-                                let mut file = match fs::File::create(PathBuf::from(
-                                    dialog.get_filename().unwrap(),
-                                )) {
-                                    Ok(file) => file,
-                                    Err(e) => {
-                                        info_message(
-                                            &(String::from("Error when creating file: ")
-                                                + &format!("{}", e)),
-                                            Some(&self.window),
-                                        );
-                                        return;
-                                    }
-                                };
-
-                                use std::io::Write;
-                                file.write_all(level_string)
-                                    .expect("Error when writing to file");
-                            }
-                        }
-                    }
-
-                    None => info_message("Select a level to export!", Some(&self.window)),
-                }
-                //let level_string = levelstring::export_level(&name);
+        let mut file = File::create(path).expect("Error creating file.");
+        match levelstring::export_level(&level_name) {
+            Ok(level) => {
+                file.write_all(&level).expect("Error writing to file.");
             }
+            Err(err) => message_box(format!("Error when exporting level: {}", err), &self.host),
+        };
+    }
 
-            Msg::Import => {
-                let mut gd_found = false;
-                process_list::for_each_process(|_, name: &Path| {
-                    if name.to_str().unwrap().replace("\0", "") == "GeometryDash.exe" {
-                        info_message("Close Geometry Dash before importing!", Some(&self.window));
-                        gd_found = true;
-                    }
-                })
-                .unwrap();
-                if gd_found {
-                    return;
-                }
+    fn import_file(&self, mut level_file: String) {
+        level_file.replace_range(..7, "");
+        level_file = level_file.replace("%20", " ");
+        println!("{}", level_file);
+        let path = PathBuf::from(level_file);
+        let root = &self.host;
+        match levelstring::import_level(path) {
+            Some(err) => message_box(format!("Error when importing level: {}", err), root),
+            None => message_box(format!("Level imported to Geometry Dash!"), root),
+        };
+    }
 
-                match self.file_select.get_filename() {
-                    Some(file) => {
-                        match levelstring::import_level(file) {
-                            Some(err) => info_message(&err, Some(&self.window)),
-                            None => info_message(
-                                "Level has been imported to Geometry dash",
-                                Some(&self.window),
-                            ),
-                        };
-                    }
-                    None => info_message("Select a file to import!", Some(&self.window)),
+    fn gd_found(&self) -> bool {
+        let mut gd_found = false;
+        process_list::for_each_process(|_, name: &Path| {
+            if name.to_str().unwrap().replace("\0", "") == "GeometryDash.exe" {
+                gd_found = true;
+            }
+        })
+        .unwrap();
+        return gd_found;
+    }
+
+    fn get_level_names(&self) -> Value {
+        match levelstring::get_level_names() {
+            Ok(list) => {
+                let mut array = Value::array(0);
+                for name in list {
+                    array.push(name);
                 }
+                array
+            }
+            Err(err) => {
+                message_box(err, &self.host);
+                Value::array(0)
             }
         }
     }
-    fn model() -> Model {
-        Model {}
-    }
+}
 
-    view! {
-        #[name = "window"]
-        gtk::Window(gtk::WindowType::Toplevel) {
+use sciter::HELEMENT;
 
-            title: "LVLShare",
-            decorated: true,
+impl sciter::EventHandler for Handler {
+    dispatch_script_call! {
+      fn export_level(String, String);
+      fn import_file(String);
+      fn gd_found();
+      fn get_level_names();
 
-
-            gtk::Box {
-                homogeneous: true,
-                spacing: 10,
-
-                orientation: Horizontal,
-
-                gtk::Box {
-                    //homogeneous: true,
-                    spacing: 10,
-                    orientation: Vertical,
-                    gtk::Label {
-                        text: "Export Level",
-                        attributes: Some(&get_title_atributes()),
-                    },
-                    #[name = "level_select"]
-                    gtk::ComboBoxText {
-                        model: Some(&create_level_list())
-                    },
-
-                    gtk::Button {
-                        label: "Export level as .lvl",
-                        clicked => Msg::Export,
-                    },
-                },
-
-                gtk::Box {
-                    //homogeneous: true,
-                    spacing: 10,
-                    orientation: Vertical,
-                    gtk::Label {
-                        text: "Import File",
-                        attributes: Some(&get_title_atributes()),
-                    },
-                    #[name = "file_select"]
-                    gtk::FileChooserButton {
-                        filter: &create_filter(),
-                    },
-                    gtk::Button {
-                        label: "Import file as a Geometry Dash level",
-                        clicked => Msg::Import,
-                    },
-                },
-
-            },
-
-
-            delete_event(_, _) => (Msg::Quit, Inhibit(false)),
-        }
     }
 }
 
-fn create_level_list() -> ListStore {
-    // Creation of a model with two rows.
-    let model = ListStore::new(&[String::static_type()]);
-
-    // Filling up the tree view.
-    let entries = match levelstring::get_level_names() {
-        Ok(list) => list,
-        Err(e) => {
-            info_message(&e, None);
-            std::process::exit(0)
-        }
-    };
-
-    for entry in entries.iter() {
-        model.insert_with_values(None, &[0], &[&entry]);
+fn message_box(msg: String, host: &Weak<sciter::Host>) {
+    if let Some(host) = host.upgrade() {
+        match host.eval_script(&format!("view.msgbox(\"{}\");", msg)) {
+            Ok(_) => {}
+            Err(_) => {}
+        };
     }
-    model
 }
 
 fn main() {
-    Win::run(()).unwrap();
-    /*let start_time = Instant::now();
+    // Step 1: Include the 'minimal.html' file as a byte array.
+    // Hint: Take a look into 'minimal.html' which contains some tiscript code.
+    let html = include_bytes!("gui.htm");
 
-    let mut args = env::args();
-    args.next();
+    // Step 2: Enable the features we need in our tiscript code.
+    sciter::set_options(sciter::RuntimeOptions::ScriptFeatures(
+        sciter::SCRIPT_RUNTIME_FEATURES::ALLOW_SYSINFO as u8		// Enables `Sciter.machineName()`
+		| sciter::SCRIPT_RUNTIME_FEATURES::ALLOW_FILE_IO as u8, // Enables opening file dialog (`view.selectFile()`)
+    ))
+    .unwrap();
 
-    let gd_path = PathBuf::from(std::env::var("localappdata").expect("No local app data"))
-        .join("GeometryDash/CCLocalLevels.dat");
+    // Enable debug mode for all windows, so that we can inspect them via Inspector.
+    sciter::set_options(sciter::RuntimeOptions::DebugMode(true)).unwrap();
 
-    let save_file = fs::File::open(gd_path.clone()).expect("Cannot find savefile!");
-    let mut xor = xorstream::Transformer::new(vec![11], save_file);
-    let b64 = base64::read::DecoderReader::new(&mut xor, base64::URL_SAFE);
-    let save_decryptor = gzip::Decoder::new(b64).unwrap();
+    let mut frame = Window::create(
+        RECT {
+            left: 0,
+            top: 0,
+            right: 400,
+            bottom: 180,
+        },
+        SW_MAIN | SW_CONTROLS,
+        None,
+    );
 
-    match args.next().expect("Expected command!").as_ref() {
-        "export" => {
-            let level_name = args.next().unwrap();
+    let handler = Handler {
+        host: Rc::downgrade(&frame.get_host()),
+    };
+    frame.event_handler(handler);
+    frame.load_html(html, None);
 
-            let level = levelstring::get_level_string(save_decryptor, &level_name);
-
-            use std::io::Write;
-            let mut file = fs::File::create(format!("{}.lvl", level_name)).unwrap();
-            file.write_all(&level).unwrap();
-        }
-
-        "import" => {
-            levelstring::export_level(PathBuf::from(args.next().unwrap()), gd_path, save_decryptor);
-        }
-
-        _ => panic!("Unknown command"),
-    }
-
-    println!(
-        "Completed in {} milliseconds!",
-        start_time.elapsed().as_millis()
-    );*/
+    frame.run_app();
 }
