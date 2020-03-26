@@ -1,5 +1,7 @@
-# LVLShare
-Export and import levels as files
+
+
+# lvlshare ![alt text](https://github.com/Spu7Nix/LVLShare/blob/master/icon.png "lvlshare")
+Export and import levels as files!
 
 ## How it works
 
@@ -11,5 +13,8 @@ For convenience, the program reads your Geometry Dash save file for all level na
 in a selectable list, so you don't have to write it manually.
 
 ## Installation
-
-wip
+**This program currently only works on windows**
++ Go to releases, and download the newest .zip file.
++ Unzip it somewhere
++ Right click the file called `lvlshare.exe` and click *send to* -> *desktop (create shortcut)*
++ Now you can use this shortcut to access lvlshare!
