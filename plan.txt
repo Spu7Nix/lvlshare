@@ -1,0 +1,7 @@
+- match gdshare's superiour design
+- add the front page with stats and username
+- add automatic backup feature
+- add settings page and settings file (using serde or json idk yet)
+	-backup frequency
+	-open on pc turn on
+	-export format (?)

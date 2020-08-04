@@ -112,10 +112,10 @@ fn main() {
         RECT {
             left: 0,
             top: 0,
-            right: 400,
-            bottom: 180,
+            right: 600,
+            bottom: 360,
         },
-        SW_MAIN | SW_CONTROLS,
+        SW_MAIN | SW_CONTROLS | SW_RESIZEABLE,
         None,
     );
 
@@ -124,6 +124,16 @@ fn main() {
     };
     frame.event_handler(handler);
     frame.load_html(html, None);
+    /*
+    let host = frame.get_host();
+    let css = [include_str!("main.css")];
+    let mut combined_css = String::new();
+    for file in css.iter() {
+        combined_css += file;
+    }
 
+    host.set_window_css(&combined_css, "", "")
+        .expect("problem setting default css");
+    */
     frame.run_app();
 }
