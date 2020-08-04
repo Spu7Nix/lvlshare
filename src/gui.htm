@@ -2,6 +2,122 @@
 
 <head>
   <title>lvlshare</title>
+
+  <style>
+    html {
+      background: #141414;
+      color: #fff;
+      font-family: Helvetica, sans-serif;
+      font-weight: 500;
+    }
+
+    #user_id_text {
+
+      color: #9fa7ac;
+      font-size: small;
+    }
+
+    .tab {
+      overflow: hidden;
+      border: none;
+      background: transparent;
+      color: white;
+    }
+
+    .item {
+      border-radius: 10px;
+      border: none;
+
+
+      cursor: pointer;
+      font-size: small;
+
+      padding: 0px 20px;
+    }
+
+    button.item {
+      background: #4e5457;
+      color: white;
+    }
+
+    select.item {
+      background: #c7d1d6;
+      color: black;
+
+    }
+
+
+
+    .tab button {
+      background-color: inherit;
+      float: left;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      padding: 14px 16px;
+      transition: 1s;
+
+      background: #141414;
+      color: #4e5457;
+
+
+      font-weight: 400;
+      font-size: small;
+
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+    }
+
+    .tab button:hover {
+      color: #76797a;
+    }
+
+    .tab button.active {
+      background: #252526;
+      color: white;
+    }
+
+    .tabcontent {
+      display: none;
+      padding: 6px 12px;
+
+
+      background: #252526;
+
+      border-top: none;
+
+      border-bottom-left-radius: 10px;
+      border-bottom-right-radius: 10px;
+      line-height: 1.6;
+    }
+
+    .scrollable {
+      overflow: auto;
+      border-radius: 10px;
+      background: #3e3e42;
+      max-height: 200px;
+      padding: 16px 4px;
+    }
+
+    .leveldisplay {
+
+      padding: 16px 16px;
+      color: #bcbec5;
+      border-radius: 10px;
+    }
+
+    .leveldisplay.selected {
+      color: #ffffff;
+      background: #4d4d58;
+    }
+
+    .leveldisplay:hover {
+      color: #ffffff;
+      border: solid #54545a;
+    }
+  </style>
+
+
 </head>
 
 <body>
@@ -11,6 +127,7 @@
     <button class="tablinks" #tab1button>import/export</button>
     <button class="tablinks" #tab2button>backups</button>
     <button class="tablinks" #tab3button>settings</button>
+    <button class="tablinks" #tab4button>merge</button>
   </div>
 
   <!-- Tab content -->
@@ -29,9 +146,12 @@
       <select class="select item" id="levellist" #levellist>
         <option def="true">* Select a level to export</option>
       </select>
-      <button class="button item" #export>Export level to file</button>
+
+
+
     </div>
     <div>
+      <button class="button item" #export>Export level to file</button>
       <button class="button item" #import>Import file to level</button>
     </div>
   </div>
@@ -41,6 +161,10 @@
   </div>
 
   <div class="tabcontent" #tab3>
+    <h3>coming soon</h3>
+  </div>
+
+  <div class="tabcontent" #tab4>
     <h3>coming soon</h3>
   </div>
 </body>

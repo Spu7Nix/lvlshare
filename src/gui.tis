@@ -52,20 +52,26 @@ function openTab(name) {
     // Get all elements with class="tabcontent" and hide them
     tabcontent = self.selectAll(".tabcontent");
     for (i = 0; i < tabcontent.length; i++) {
+
+        
         tabcontent[i].style["display"] = "none";
     }
 
     // Get all elements with class="tablinks" and remove the class "active"
     tablinks = self.selectAll(".tablinks");
+
+    
     for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].attributes["class"] = tablinks[i].attributes.removeClass(["active"]);
+        tablinks[i].attributes.removeClass(["active"]);
     }
 
     // Show the current tab, and add an "active" class to the button that opened the tab
-    var active_button = self.select("#" + name);
-    stdout.println(name)
-    active_button.style["display"] = "block";
+    var active_button = self.select("#" + name + "button");
+    
+    
     active_button.attributes.addClass("active")
+
+    self.select("#" + name).style["display"] = "block";
 
 }
 
@@ -81,6 +87,9 @@ self.select("#tab2button").on("click", function() {
 });
 self.select("#tab3button").on("click", function() {
     openTab("tab3")
+});
+self.select("#tab4button").on("click", function() {
+    openTab("tab4")
 });
 
 openTab("tab0");

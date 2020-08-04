@@ -141,7 +141,7 @@ fn main() {
             left: 0,
             top: 0,
             right: 600,
-            bottom: 360,
+            bottom: 450,
         },
         SW_MAIN | SW_CONTROLS | SW_RESIZEABLE,
         None,
@@ -154,17 +154,17 @@ fn main() {
     frame.load_html(html, None);
 
     let host = frame.get_host();
-    let css = [include_str!("main.css")];
+    /*let css = [include_str!("main.css")];
     let mut combined_css = String::new();
     for file in css.iter() {
         combined_css += file;
-    }
+    }*/
 
     host.eval_script(include_str!("gui.tis"))
         .expect("Error when evaluating script");
 
-    host.set_master_css(&combined_css, false)
-        .expect("problem setting default css");
+    /*host.set_master_css(&combined_css, false)
+    .expect("problem setting default css");*/
 
     frame.run_app();
 }
