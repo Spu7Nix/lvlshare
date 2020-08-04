@@ -1,0 +1,106 @@
+html {
+    background: #2e3336;
+    color: #fff;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+a {
+    color: white;
+}
+
+code {
+    font-weight: bold;
+}
+
+.button {
+    background: #4e5457;
+    color: white;
+}
+
+.item {
+    text-align: center center;
+    padding: 1% 1%;
+    text-align: center;
+    font-size: 16px;
+
+    display: block;
+    transition-duration: 0.5s;
+    width: 98%;
+
+    font-family: monospace;
+    font-weight: bold;
+    font-size: medium;
+}
+
+#user_id_text {
+    font-family: monospace;
+    color: lightslategray;
+    font-size: small;
+}
+
+
+
+.button:hover {
+    background-color: #9db7c4;
+    color: #4e5457;
+}
+
+.select {
+    background: white;
+    color: black;
+}
+
+/* style the items (options), including the selected item: */
+.select-items {
+    position: absolute;
+    background-color: DodgerBlue;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 99;
+}
+
+.tab {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background: #4e5457;
+    color: white;
+}
+
+.tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+
+    background: #4e5457;
+    color: white;
+
+    font-family: monospace;
+    font-weight: bold;
+    font-size: medium;
+}
+
+.tab button:hover {
+    background-color: #ddd;
+}
+
+.tab button.active {
+    background-color: #9db7c4;
+    color: #4e5457;
+}
+
+.tabcontent {
+    display: none;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-top: none;
+}
+
+.stat {
+    float: down;
+}

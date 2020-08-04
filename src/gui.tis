@@ -1,0 +1,86 @@
+for (var name in view.get_level_names()) {
+    $(#levellist).options.$append(<option>{name}</option>);
+}
+
+var stats = view.get_user_stats();
+
+$(#userinfo).$append(<h2>Logged in as {stats.username}</h2> );
+$(#userinfo).$append(<p id="user_id_text">User ID: {stats.user_id} </p>);
+
+
+for (var stat in stats.stats) {
+    $(#stats).$append(<li class="stat">{stat.name}: {stat.value}</li>);
+}
+
+
+
+function msg(msg) {
+    view.msgbox(msg);
+}
+
+$(button#import).on("click", function() {
+    if (view.gd_found()) {
+        view.msgbox("Close Geometry Dash before importing!");
+        return();
+    }
+    var fn = view.selectFile(#open, "lvlshare level file | *.lvl" , "lvl" );
+
+    if (fn) {
+        view.import_file(fn);
+    }
+});
+
+$(button#export).on("click", function() {
+
+    let name = $(#levellist).value;
+    if (name == "* Select a level to export") {
+        view.msgbox("Select a level to export from the list above");
+        return();
+    }
+
+    var fn = view.selectFile(#save, "lvlshare level file | *.lvl" , "lvl", name + ".lvl" );
+
+    if (fn) {
+        view.export_level(name, fn);
+    }
+});
+
+function openTab(name) {
+    // Declare all variables
+    var i, tabcontent, tablinks;
+
+    // Get all elements with class="tabcontent" and hide them
+    tabcontent = self.selectAll(".tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style["display"] = "none";
+    }
+
+    // Get all elements with class="tablinks" and remove the class "active"
+    tablinks = self.selectAll(".tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].attributes["class"] = tablinks[i].attributes.removeClass(["active"]);
+    }
+
+    // Show the current tab, and add an "active" class to the button that opened the tab
+    var active_button = self.select("#" + name);
+    stdout.println(name)
+    active_button.style["display"] = "block";
+    active_button.attributes.addClass("active")
+
+}
+
+
+self.select("#tab0button").on("click", function() {
+    openTab("tab0")
+});
+self.select("#tab1button").on("click", function() {
+    openTab("tab1")
+});
+self.select("#tab2button").on("click", function() {
+    openTab("tab2")
+});
+self.select("#tab3button").on("click", function() {
+    openTab("tab3")
+});
+
+openTab("tab0");

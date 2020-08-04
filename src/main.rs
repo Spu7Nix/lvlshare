@@ -152,7 +152,7 @@ fn main() {
     };
     frame.event_handler(handler);
     frame.load_html(html, None);
-    /*
+
     let host = frame.get_host();
     let css = [include_str!("main.css")];
     let mut combined_css = String::new();
@@ -160,8 +160,11 @@ fn main() {
         combined_css += file;
     }
 
-    host.set_window_css(&combined_css, "", "")
+    host.eval_script(include_str!("gui.tis"))
+        .expect("Error when evaluating script");
+
+    host.set_master_css(&combined_css, false)
         .expect("problem setting default css");
-    */
+
     frame.run_app();
 }
