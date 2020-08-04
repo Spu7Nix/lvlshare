@@ -1,182 +1,193 @@
 <html window-icon="file:icon.png">
-  <head>
-    <title>lvlshare</title>
-    <style>
-      html {
-        background: #2e3336;
-        color: #fff;
-        font-family: monospace;
-        font-weight: bold;
+
+<head>
+  <title>lvlshare</title>
+  <style>
+    html {
+      background: #2e3336;
+      color: #fff;
+      font-family: monospace;
+      font-weight: bold;
+    }
+
+    a {
+      color: white;
+    }
+
+    code {
+      font-weight: bold;
+    }
+
+    .button {
+      background: #4e5457;
+      color: white;
+    }
+
+    .item {
+      text-align: center center;
+      padding: 1% 1%;
+      text-align: center;
+      font-size: 16px;
+
+      display: block;
+      transition-duration: 0.5s;
+      width: 98%;
+
+      font-family: monospace;
+      font-weight: bold;
+      font-size: medium;
+    }
+
+    .button:hover {
+      background-color: #9db7c4;
+      color: #4e5457;
+    }
+
+    .select {
+      background: white;
+      color: black;
+    }
+
+    /* style the items (options), including the selected item: */
+    .select-items {
+      position: absolute;
+      background-color: DodgerBlue;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 99;
+    }
+
+    .tab {
+      overflow: hidden;
+      border: 1px solid #ccc;
+      background: #4e5457;
+      color: white;
+    }
+
+    .tab button {
+      background-color: inherit;
+      float: left;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      padding: 14px 16px;
+      transition: 0.3s;
+
+      background: #4e5457;
+      color: white;
+
+      font-family: monospace;
+      font-weight: bold;
+      font-size: medium;
+    }
+
+    .tab button:hover {
+      background-color: #ddd;
+    }
+
+    .tab button.active {
+      background-color: #9db7c4;
+      color: #4e5457;
+    }
+
+    .tabcontent {
+      display: none;
+      padding: 6px 12px;
+      border: 1px solid #ccc;
+      border-top: none;
+    }
+  </style>
+
+  <script type="text/tiscript">
+
+
+
+    for (var name in view.get_level_names()) {
+      $(#levellist).options.$append(<option>{name}</option>);
+    }
+
+    for (var stat in view.get_user_stats()) {
+      $(#statlist).$append(<li>{stat}</li>);
+    }
+
+    
+
+    function msg(msg) {
+      view.msgbox(msg);
+    }
+
+    $(button#import).on("click", function() {
+      if (view.gd_found()) {
+        view.msgbox("Close Geometry Dash before importing!");
+        return();
+      }
+      var fn = view.selectFile(#open, "lvlshare level file | *.lvl" , "lvl" );
+
+      if (fn) {
+        view.import_file(fn);
+      }
+    });
+
+    $(button#export).on("click", function() {
+
+      let name = $(#levellist).value;
+      if (name == "* Select a level to export") {
+        view.msgbox("Select a level to export from the list above");
+        return();
       }
 
-      a {
-        color: white;
+      var fn = view.selectFile(#save, "lvlshare level file | *.lvl" , "lvl", name + ".lvl" );
+
+      if (fn) {
+        view.export_level(name, fn);
+      }
+    });
+
+    function openTab(name) {
+      // Declare all variables
+      var i, tabcontent, tablinks;
+
+      // Get all elements with class="tabcontent" and hide them
+      tabcontent = self.selectAll(".tabcontent");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style["display"] = "none";
       }
 
-      code {
-        font-weight: bold;
+      // Get all elements with class="tablinks" and remove the class "active"
+      tablinks = self.selectAll(".tablinks");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].attributes["class"] = tablinks[i].attributes.removeClass(["active"]);
       }
 
-      .button {
-        background: #4e5457;
-        color: white;
-      }
+      // Show the current tab, and add an "active" class to the button that opened the tab
+      var active_button = self.select("#" + name);
+      stdout.println(name)
+      active_button.style["display"] = "block";
+      active_button.attributes.addClass("active")
 
-      .item {
-        text-align: center center;
-        padding: 1% 1%;
-        text-align: center;
-        font-size: 16px;
-
-        display: block;
-        transition-duration: 0.5s;
-        width: 98%;
-
-        font-family: monospace;
-        font-weight: bold;
-        font-size: medium;
-      }
-
-      .button:hover {
-        background-color: #9db7c4;
-        color: #4e5457;
-      }
-
-      .select {
-        background: white;
-        color: black;
-      }
-
-      /* style the items (options), including the selected item: */
-      .select-items {
-        position: absolute;
-        background-color: DodgerBlue;
-        top: 100%;
-        left: 0;
-        right: 0;
-        z-index: 99;
-      }
-
-      .tab {
-        overflow: hidden;
-        border: 1px solid #ccc;
-        background: #4e5457;
-        color: white;
-      }
-
-      .tab button {
-        background-color: inherit;
-        float: left;
-        border: none;
-        outline: none;
-        cursor: pointer;
-        padding: 14px 16px;
-        transition: 0.3s;
-
-        background: #4e5457;
-        color: white;
-
-        font-family: monospace;
-        font-weight: bold;
-        font-size: medium;
-      }
-
-      .tab button:hover {
-        background-color: #ddd;
-      }
-
-      .tab button.active {
-        background-color: #9db7c4;
-        color: #4e5457;
-      }
-
-      .tabcontent {
-        display: none;
-        padding: 6px 12px;
-        border: 1px solid #ccc;
-        border-top: none;
-      }
-    </style>
-
-    <script type="text/tiscript">
-
-      for (var name in view.get_level_names()) {
-        $(#levellist).options.$append(<option>{name}</option>);
-      }
-
-      function msg(msg) {
-        view.msgbox(msg);
-      }
-
-      $(button#import).on("click", function() {
-        if (view.gd_found()) {
-          view.msgbox("Close Geometry Dash before importing!");
-          return();
-        }
-        var fn = view.selectFile(#open, "lvlshare level file | *.lvl" , "lvl" );
-
-        if (fn) {
-          view.import_file(fn);
-        }
-      });
-
-      $(button#export).on("click", function() {
-
-        let name = $(#levellist).value;
-        if (name == "* Select a level to export") {
-          view.msgbox("Select a level to export from the list above");
-          return();
-        }
-
-        var fn = view.selectFile(#save, "lvlshare level file | *.lvl" , "lvl", name + ".lvl" );
-
-        if (fn) {
-          view.export_level(name, fn);
-        }
-      });
-
-      function openTab(name) {
-        // Declare all variables
-        var i, tabcontent, tablinks;
-
-        // Get all elements with class="tabcontent" and hide them
-        tabcontent = self.selectAll(".tabcontent");
-        for (i = 0; i < tabcontent.length; i++) {
-          tabcontent[i].style["display"] = "none";
-        }
-
-        // Get all elements with class="tablinks" and remove the class "active"
-        tablinks = self.selectAll(".tablinks");
-        for (i = 0; i < tablinks.length; i++) {
-          tablinks[i].attributes["class"] = tablinks[i].attributes.removeClass(["active"]);
-        }
-
-        // Show the current tab, and add an "active" class to the button that opened the tab
-        var active_button = self.select("#" + name);
-        stdout.println(name)
-        active_button.style["display"] = "block";
-        active_button.attributes.addClass("active")
-
-      }
+    }
 
 
-      self.select("#tab0button").on("click", function() {
-        openTab("tab0")
-      });
-      self.select("#tab1button").on("click", function() {
-        openTab("tab1")
-      });
-      self.select("#tab2button").on("click", function() {
-        openTab("tab2")
-      });
-      self.select("#tab3button").on("click", function() {
-        openTab("tab3")
-      });
-    </script>
-  </head>
+    self.select("#tab0button").on("click", function() {
+      openTab("tab0")
+    });
+    self.select("#tab1button").on("click", function() {
+      openTab("tab1")
+    });
+    self.select("#tab2button").on("click", function() {
+      openTab("tab2")
+    });
+    self.select("#tab3button").on("click", function() {
+      openTab("tab3")
+    });
 
-  <body>
-    <!-- 
+    openTab("tab0");
+  </script>
+</head>
+
+<body>
+  <!-- 
     <div>
       <select class="select item" id="levellist" #levellist>
         <option def="true">* Select a level to export</option>
@@ -188,37 +199,42 @@
     </div>
     -->
 
-    <!-- Tab links -->
-    <div class="tab">
-      <button class="tablinks" #tab0button>home</button>
-      <button class="tablinks" #tab1button>import/export</button>
-      <button class="tablinks" #tab2button>backups</button>
-      <button class="tablinks" #tab3button>settings</button>
-    </div>
+  <!-- Tab links -->
+  <div class="tab">
+    <button class="tablinks" #tab0button>home</button>
+    <button class="tablinks" #tab1button>import/export</button>
+    <button class="tablinks" #tab2button>backups</button>
+    <button class="tablinks" #tab3button>settings</button>
+  </div>
 
-    <!-- Tab content -->
-    <div class="tabcontent" #tab0>
-      <h3>coming soon</h3>
-    </div>
+  <!-- Tab content -->
+  <div class="tabcontent" #tab0>
+    <h3>Stats</h3>
 
-    <div class="tabcontent" #tab1>
-      <div>
-        <select class="select item" id="levellist" #levellist>
-          <option def="true">* Select a level to export</option>
-        </select>
-        <button class="button item" #export>Export level to file</button>
-      </div>
-      <div>
-        <button class="button item" #import>Import file to level</button>
-      </div>
-    </div>
+    <ul #statlist>
 
-    <div class="tabcontent" #tab2>
-      <h3>coming soon</h3>
-    </div>
+    </ul>
+  </div>
 
-    <div class="tabcontent" #tab3>
-      <h3>coming soon</h3>
+  <div class="tabcontent" #tab1>
+    <div>
+      <select class="select item" id="levellist" #levellist>
+        <option def="true">* Select a level to export</option>
+      </select>
+      <button class="button item" #export>Export level to file</button>
     </div>
-  </body>
+    <div>
+      <button class="button item" #import>Import file to level</button>
+    </div>
+  </div>
+
+  <div class="tabcontent" #tab2>
+    <h3>coming soon</h3>
+  </div>
+
+  <div class="tabcontent" #tab3>
+    <h3>coming soon</h3>
+  </div>
+</body>
+
 </html>

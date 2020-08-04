@@ -215,6 +215,8 @@ pub fn import_level(level_file: PathBuf) -> Option<String> {
     let mut level = Vec::new();
     level_decompressor.read_to_end(&mut level).unwrap();
 
+    //NEED TO FIND: <k>GS_value</k>
+
     //write it in
     let mut buf = Vec::new();
     for _ in 0..11 {
@@ -315,4 +317,105 @@ pub fn import_level(level_file: PathBuf) -> Option<String> {
 
     fs::write(gd_path, encoded).unwrap();
     None
+}
+
+pub fn get_user_stats() -> Result<Vec<String>, String> {
+    let gd_path = PathBuf::from(match std::env::var("localappdata") {
+        Ok(path) => path,
+        Err(e) => return Err(e.to_string()),
+    })
+    .join("GeometryDash/CCGameManager.dat");
+
+    let save_file = match fs::File::open(gd_path.clone()) {
+        Ok(file) => file,
+        Err(e) => return Err(format!("Cannot find savefile: {}", e)),
+    };
+    let mut xor = xorstream::Transformer::new(vec![11], save_file);
+    let b64 = base64::read::DecoderReader::new(&mut xor, base64::URL_SAFE);
+    let save_decryptor = gzip::Decoder::new(b64).unwrap();
+
+    let mut reader = Reader::from_reader(BufReader::new(save_decryptor));
+    reader.trim_text(true);
+    let mut buf = Vec::new();
+
+    let mut stats = Vec::<String>::new();
+    let mut reading_stats = false;
+
+    let mut read_key = true;
+    let mut current_stat = String::new();
+
+    loop {
+        match reader.read_event(&mut buf) {
+            Ok(Event::Text(e)) => {
+                let text = e.unescape_and_decode(&reader).unwrap();
+                if reading_stats {
+                    if read_key {
+                        let mut skipped = false;
+                        let decrypted_key = match text.as_ref() {
+                            "1" => "Jumps",
+                            "2" => "Total attempts",
+                            "4" => "Completed online levels",
+                            "5" => "Demons beaten",
+                            "6" => "Stars",
+                            "13" => "Diamonds",
+                            "14" => "Orbs",
+                            "8" => "Coins",
+                            "12" => "User coins",
+                            "9" => "Killed players",
+
+                            "GS_completed" => {
+                                skipped = true;
+                                reading_stats = false;
+                                ""
+                            }
+
+                            _ => {
+                                //skip
+                                skipped = true;
+                                for _ in 0..5 {
+                                    match reader.read_event(&mut buf) {
+                                        Err(e) => {
+                                            return Err(format!(
+                                                "Error at position {}: {:?} (while skipping stat)",
+                                                reader.buffer_position(),
+                                                e
+                                            ))
+                                        }
+                                        _ => (), // There are several other `Event`s we do not consider here
+                                    };
+                                }
+                                ""
+                            }
+                        };
+                        if !skipped {
+                            current_stat += decrypted_key;
+                            current_stat += ": ";
+                            read_key = false;
+                        }
+                    } else {
+                        stats.push(current_stat + &text);
+                        current_stat = String::new();
+
+                        read_key = true;
+
+                        if stats.len() >= 10 {
+                            reading_stats = false;
+                        }
+                    }
+                } else if text == "GS_value" {
+                    reading_stats = true
+                }
+            }
+            Ok(Event::Eof) => break,
+            Err(e) => {
+                return Err(format!(
+                    "Error at position {}: {:?}",
+                    reader.buffer_position(),
+                    e
+                ))
+            }
+            _ => (), // There are several other `Event`s we do not consider here
+        }
+    }
+    Ok(stats)
 }

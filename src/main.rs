@@ -70,6 +70,22 @@ impl Handler {
             }
         }
     }
+
+    fn get_user_stats(&self) -> Value {
+        match levelstring::get_user_stats() {
+            Ok(list) => {
+                let mut array = Value::array(0);
+                for stat in list {
+                    array.push(stat);
+                }
+                array
+            }
+            Err(err) => {
+                message_box(err, &self.host);
+                Value::array(0)
+            }
+        }
+    }
 }
 
 use sciter::HELEMENT;
@@ -80,6 +96,7 @@ impl sciter::EventHandler for Handler {
       fn import_file(String);
       fn gd_found();
       fn get_level_names();
+      fn get_user_stats();
 
     }
 }
