@@ -73,16 +73,27 @@ impl Handler {
 
     fn get_user_stats(&self) -> Value {
         match levelstring::get_user_stats() {
-            Ok(list) => {
-                let mut array = Value::array(0);
-                for stat in list {
-                    array.push(stat);
+            Ok(mut list) => {
+                let name = list.remove("name").unwrap();
+                let user_id = list.remove("user_id").unwrap();
+                let mut stats_array = Value::array(0);
+                for stat in list.iter() {
+                    let mut stat_object = Value::map();
+                    stat_object.set_item("name", (*stat.0).clone());
+                    stat_object.set_item("value", (*stat.1).clone());
+                    stats_array.push(stat_object);
                 }
-                array
+
+                let mut ret = Value::map();
+                ret.set_item("username", name);
+                ret.set_item("user_id", user_id);
+                ret.set_item("stats", stats_array);
+
+                ret
             }
             Err(err) => {
                 message_box(err, &self.host);
-                Value::array(0)
+                Value::map()
             }
         }
     }

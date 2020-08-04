@@ -11,6 +11,8 @@ use quick_xml::events::Event;
 use quick_xml::Reader;
 use quick_xml::Writer;
 
+use std::collections::HashMap;
+
 use std::io::BufReader;
 use std::io::Cursor;
 
@@ -319,7 +321,7 @@ pub fn import_level(level_file: PathBuf) -> Option<String> {
     None
 }
 
-pub fn get_user_stats() -> Result<Vec<String>, String> {
+pub fn get_user_stats() -> Result<HashMap<String, String>, String> {
     let gd_path = PathBuf::from(match std::env::var("localappdata") {
         Ok(path) => path,
         Err(e) => return Err(e.to_string()),
@@ -338,11 +340,14 @@ pub fn get_user_stats() -> Result<Vec<String>, String> {
     reader.trim_text(true);
     let mut buf = Vec::new();
 
-    let mut stats = Vec::<String>::new();
+    let mut stats = HashMap::new();
     let mut reading_stats = false;
 
     let mut read_key = true;
     let mut current_stat = String::new();
+
+    let mut name_detected = false;
+    let mut user_id_detected = false;
 
     loop {
         match reader.read_event(&mut buf) {
@@ -389,11 +394,11 @@ pub fn get_user_stats() -> Result<Vec<String>, String> {
                         };
                         if !skipped {
                             current_stat += decrypted_key;
-                            current_stat += ": ";
+
                             read_key = false;
                         }
                     } else {
-                        stats.push(current_stat + &text);
+                        stats.insert(current_stat, text);
                         current_stat = String::new();
 
                         read_key = true;
@@ -404,6 +409,16 @@ pub fn get_user_stats() -> Result<Vec<String>, String> {
                     }
                 } else if text == "GS_value" {
                     reading_stats = true
+                } else if name_detected {
+                    stats.insert("name".to_string(), text);
+                    name_detected = false;
+                } else if user_id_detected {
+                    stats.insert("user_id".to_string(), text);
+                    user_id_detected = false;
+                } else if text == "playerName" {
+                    name_detected = true;
+                } else if text == "playerUserID" {
+                    user_id_detected = true;
                 }
             }
             Ok(Event::Eof) => break,

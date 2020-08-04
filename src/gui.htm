@@ -38,6 +38,14 @@
       font-size: medium;
     }
 
+    #user_id_text {
+      font-family: monospace;
+      color: lightslategray;
+      font-size: small;
+    }
+
+
+
     .button:hover {
       background-color: #9db7c4;
       color: #4e5457;
@@ -97,6 +105,10 @@
       border: 1px solid #ccc;
       border-top: none;
     }
+
+    .stat {
+      float: down;
+    }
   </style>
 
   <script type="text/tiscript">
@@ -107,8 +119,14 @@
       $(#levellist).options.$append(<option>{name}</option>);
     }
 
-    for (var stat in view.get_user_stats()) {
-      $(#statlist).$append(<li>{stat}</li>);
+    var stats = view.get_user_stats();
+
+    $(#userinfo).$append(<h2>Logged in as {stats.username}</h2> );
+    $(#userinfo).$append(<p id="user_id_text">User ID: {stats.user_id} </p>);
+    
+
+    for (var stat in stats.stats) {
+      $(#stats).$append(<li class="stat">{stat.name}: {stat.value}</li>);
     }
 
     
@@ -209,11 +227,13 @@
 
   <!-- Tab content -->
   <div class="tabcontent" #tab0>
-    <h3>Stats</h3>
 
-    <ul #statlist>
 
-    </ul>
+    <div #userinfo>
+
+    </div>
+    <h2> Stats: </h2>
+    <ul #stats></ul>
   </div>
 
   <div class="tabcontent" #tab1>
