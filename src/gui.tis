@@ -49,6 +49,12 @@ function openTab(name) {
     // Declare all variables
     var i, tabcontent, tablinks;
 
+    if (name != "tab0") {
+        self.select("#" + name).style["border-top-left-radius"] = "10px";
+    } else {
+        self.select("#" + name).style["border-top-left-radius"] = "0px";
+    }
+
     // Get all elements with class="tabcontent" and hide them
     tabcontent = self.selectAll(".tabcontent");
     for (i = 0; i < tabcontent.length; i++) {

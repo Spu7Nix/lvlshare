@@ -4,9 +4,9 @@ mod levelstring;
 
 extern crate sciter;
 use sciter::{
-    dispatch_script_call, make_args,
+    dispatch_script_call,
     types::{RECT, SCITER_CREATE_WINDOW_FLAGS::*},
-    Element, Value, Window,
+    Value, Window,
 };
 use std::fs::File;
 use std::path::{Path, PathBuf};
@@ -99,8 +99,6 @@ impl Handler {
     }
 }
 
-use sciter::HELEMENT;
-
 impl sciter::EventHandler for Handler {
     dispatch_script_call! {
       fn export_level(String, String);
@@ -143,7 +141,7 @@ fn main() {
             right: 600,
             bottom: 450,
         },
-        SW_MAIN | SW_CONTROLS | SW_RESIZEABLE,
+        SW_MAIN | SW_CONTROLS,
         None,
     );
 

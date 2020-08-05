@@ -88,6 +88,7 @@
 
       border-bottom-left-radius: 10px;
       border-bottom-right-radius: 10px;
+      border-top-right-radius: 10px;
       line-height: 1.6;
     }
 
@@ -126,8 +127,8 @@
     <button class="tablinks" #tab0button>home</button>
     <button class="tablinks" #tab1button>import/export</button>
     <button class="tablinks" #tab2button>backups</button>
-    <button class="tablinks" #tab3button>settings</button>
-    <button class="tablinks" #tab4button>merge</button>
+    <button class="tablinks" #tab3button>merge</button>
+    <button class="tablinks" #tab4button>settings</button>
   </div>
 
   <!-- Tab content -->
@@ -146,9 +147,6 @@
       <select class="select item" id="levellist" #levellist>
         <option def="true">* Select a level to export</option>
       </select>
-
-
-
     </div>
     <div>
       <button class="button item" #export>Export level to file</button>
