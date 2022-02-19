@@ -4,6 +4,8 @@ for (var name in view.get_level_names()) {
 
 var stats = view.get_user_stats();
 
+
+
 $(#userinfo).$append(<h2>Logged in as {stats.username}</h2> );
 $(#userinfo).$append(<p id="user_id_text">User ID: {stats.user_id} </p>);
 
@@ -80,6 +82,19 @@ function openTab(name) {
     self.select("#" + name).style["display"] = "block";
 
 }
+
+$(button#addpartfile).on("click", function() {
+
+    var leveldata = {
+        name: "test name",
+        creator: "creatorName",
+    };
+
+    self.select("#partlist").$append(<div class="partdisplay">
+        <t class="levelname"> {leveldata.name} </t>
+        <t class="creatorname"> by {leveldata.creator} </t>
+    </div>);
+});
 
 
 self.select("#tab0button").on("click", function() {

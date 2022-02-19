@@ -1,5 +1,6 @@
-#![windows_subsystem = "windows"]
+//#![windows_subsystem = "windows"]
 
+mod backups;
 mod levelstring;
 
 extern crate sciter;
@@ -14,6 +15,8 @@ use std::rc::{Rc, Weak};
 struct Handler {
     host: Weak<sciter::Host>,
 }
+
+const LOCAL_DATA_FOLDER_NAME: &str = "LVLShare";
 
 impl Handler {
     fn export_level(&self, level_name: String, mut location: String) {
@@ -40,19 +43,19 @@ impl Handler {
         let root = &self.host;
         match levelstring::import_level(path) {
             Some(err) => message_box(format!("Error when importing level: {}", err), root),
-            None => message_box(format!("Level imported to Geometry Dash!"), root),
+            None => message_box("Level imported to Geometry Dash!".to_string(), root),
         };
     }
 
     fn gd_found(&self) -> bool {
         let mut gd_found = false;
         process_list::for_each_process(|_, name: &Path| {
-            if name.to_str().unwrap().replace("\0", "") == "GeometryDash.exe" {
+            if name.to_str().unwrap().replace('\0', "") == "GeometryDash.exe" {
                 gd_found = true;
             }
         })
         .unwrap();
-        return gd_found;
+        gd_found
     }
 
     fn get_level_names(&self) -> Value {
@@ -112,16 +115,17 @@ impl sciter::EventHandler for Handler {
 
 fn message_box(msg: String, host: &Weak<sciter::Host>) {
     if let Some(host) = host.upgrade() {
-        match host.eval_script(&format!("view.msgbox(\"{}\");", msg)) {
-            Ok(_) => {}
-            Err(_) => {}
-        };
+        if host
+            .eval_script(&format!("view.msgbox(\"{}\");", msg))
+            .is_ok()
+        {};
     }
 }
 
 fn main() {
     // Step 1: Include the 'minimal.html' file as a byte array.
     // Hint: Take a look into 'minimal.html' which contains some tiscript code.
+
     let html = include_bytes!("gui.htm");
 
     // Step 2: Enable the features we need in our tiscript code.
@@ -141,14 +145,28 @@ fn main() {
             right: 600,
             bottom: 450,
         },
-        SW_MAIN | SW_CONTROLS,
+        SW_MAIN | SW_CONTROLS, // | SW_RESIZEABLE,
         None,
     );
+
+    // create local save folder
+
+    let localdata = PathBuf::from(match std::env::var("localappdata") {
+        Ok(path) => path,
+        Err(e) => panic!("Error when loading localappdata: {}", e),
+    })
+    .join(LOCAL_DATA_FOLDER_NAME);
+
+    if !localdata.exists() {
+        println!("first time opening app");
+        std::fs::create_dir_all(localdata).expect("Problem when creating local data directory.");
+    }
 
     let handler = Handler {
         host: Rc::downgrade(&frame.get_host()),
     };
     frame.event_handler(handler);
+
     frame.load_html(html, None);
 
     let host = frame.get_host();

@@ -12,7 +12,6 @@
     }
 
     #user_id_text {
-
       color: #9fa7ac;
       font-size: small;
     }
@@ -28,25 +27,33 @@
       border-radius: 10px;
       border: none;
 
-
       cursor: pointer;
       font-size: small;
 
       padding: 0px 20px;
+      margin: 5px 2px;
+
+      transition:
+        background-color linear 0.1s 0.1s, color linear 0.1s 0.1s;
     }
+
+
 
     button.item {
       background: #4e5457;
       color: white;
     }
 
+    button.item:hover {
+      background: #a2aeb4;
+      color: #3f4447;
+    }
+
     select.item {
       background: #c7d1d6;
       color: black;
-
+      font-weight: 600;
     }
-
-
 
     .tab button {
       background-color: inherit;
@@ -60,12 +67,18 @@
       background: #141414;
       color: #4e5457;
 
-
       font-weight: 400;
       font-size: small;
 
       border-top-left-radius: 10px;
       border-top-right-radius: 10px;
+
+      
+
+      transition:
+        color linear 0.2s;
+
+
     }
 
     .tab button:hover {
@@ -75,12 +88,13 @@
     .tab button.active {
       background: #252526;
       color: white;
+      
+      
     }
 
     .tabcontent {
       display: none;
       padding: 6px 12px;
-
 
       background: #252526;
 
@@ -98,10 +112,10 @@
       background: #3e3e42;
       max-height: 200px;
       padding: 16px 4px;
+      text-align: center;
     }
 
     .leveldisplay {
-
       padding: 16px 16px;
       color: #bcbec5;
       border-radius: 10px;
@@ -116,13 +130,35 @@
       color: #ffffff;
       border: solid #54545a;
     }
+
+    .partdisplay {
+      background: #4f4f5a;
+      border-radius: 10px;
+      margin: 5px;
+      padding: 16px 16px;
+      text-align: left;
+    }
+
+    .partdisplay.levelname {
+      color: white;
+      font-size: small;
+    }
+
+    .partdisplay.creatorname {
+      color: #9fa7ac;
+      font-size: small;
+      font-weight: 300;
+    }
+
+    .scrollmenubgtext {
+      color: #252526;
+      font-size: medium;
+      font-weight: 300;
+    }
   </style>
-
-
 </head>
 
 <body>
-
   <div class="tab">
     <button class="tablinks" #tab0button>home</button>
     <button class="tablinks" #tab1button>import/export</button>
@@ -133,16 +169,13 @@
 
   <!-- Tab content -->
   <div class="tabcontent" #tab0>
-
-
-    <div #userinfo>
-
-    </div>
-    <h2> Stats: </h2>
+    <div #userinfo></div>
+    <h2>Stats:</h2>
     <ul #stats></ul>
   </div>
 
   <div class="tabcontent" #tab1>
+    <h3>Import/Export</h3>
     <div>
       <select class="select item" id="levellist" #levellist>
         <option def="true">* Select a level to export</option>
@@ -155,15 +188,29 @@
   </div>
 
   <div class="tabcontent" #tab2>
-    <h3>coming soon</h3>
+    <h3>Backups</h3>
+    <button class="button item" #manualbackup>Backup current data</button>
+    <div class="scrollable" #backupslist>
+      <t class="scrollmenubgtext"> No backups found</t>
+    </div>
   </div>
 
   <div class="tabcontent" #tab3>
-    <h3>coming soon</h3>
+    <h3>Merge tool</h3>
+
+    <div class="scrollable" #partlist></div>
+    <div>
+      <button class="button item" #addpartfile>Add part from file</button>
+      <button class="button item" #addpartid>Add part from ID</button>
+      <button class="button item" #addpartlevel>Add part from level</button>
+    </div>
   </div>
 
   <div class="tabcontent" #tab4>
-    <h3>coming soon</h3>
+    <h3>Settings</h3>
+    <div #settingscontainer></div>
+
+    <button class="button item" #savesettings>Save settings</button>
   </div>
 </body>
 
